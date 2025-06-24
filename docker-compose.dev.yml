@@ -1,0 +1,140 @@
+version: '3.8'
+
+name: documenso-dev
+
+services:
+  # Main application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: documenso-app
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source code for hot reloading
+      - .:/app
+      - /app/node_modules
+      - /app/apps/remix/node_modules
+      - /app/apps/documentation/node_modules
+      - /app/apps/openpage-api/node_modules
+      - /app/packages/*/node_modules
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://documenso:password@database:5432/documenso
+      - NEXT_PRIVATE_DATABASE_URL=postgresql://documenso:password@database:5432/documenso
+      - NEXT_PRIVATE_DIRECT_DATABASE_URL=postgresql://documenso:password@database:5432/documenso
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - NEXT_PUBLIC_API_URL=http://localhost:3000
+      - NEXT_PRIVATE_ENCRYPTION_KEY=CAFEBABE
+      - NEXT_PRIVATE_ENCRYPTION_SECONDARY_KEY=DEADBEEF
+      - NEXT_PRIVATE_S3_ENDPOINT=http://minio:9002
+      - NEXT_PRIVATE_S3_ACCESS_KEY=documenso
+      - NEXT_PRIVATE_S3_SECRET_KEY=password
+      - NEXT_PRIVATE_S3_BUCKET=documenso
+      - NEXT_PRIVATE_S3_REGION=us-east-1
+      - NEXT_PRIVATE_SMTP_HOST=mailserver
+      - NEXT_PRIVATE_SMTP_PORT=2500
+      - NEXT_PRIVATE_SMTP_USER=documenso
+      - NEXT_PRIVATE_SMTP_PASSWORD=password
+      - NEXT_PRIVATE_SMTP_FROM=noreply@documenso.local
+    depends_on:
+      database:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      mailserver:
+        condition: service_started
+    networks:
+      - documenso-network
+    restart: unless-stopped
+
+  # PostgreSQL Database
+  database:
+    image: postgres:15-alpine
+    container_name: documenso-database
+    ports:
+      - "54320:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./packages/prisma/migrations:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_USER=documenso
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=documenso
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U documenso -d documenso"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - documenso-network
+    restart: unless-stopped
+
+  # MinIO for S3-compatible storage
+  minio:
+    image: minio/minio:latest
+    container_name: documenso-minio
+    ports:
+      - "9001:9001"  # Console
+      - "9002:9000"  # API
+    volumes:
+      - minio_data:/data
+    environment:
+      - MINIO_ROOT_USER=documenso
+      - MINIO_ROOT_PASSWORD=password
+    command: server /data --console-address ":9001" --address ":9000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - documenso-network
+    restart: unless-stopped
+
+  # Inbucket for email testing
+  mailserver:
+    image: inbucket/inbucket:latest
+    container_name: documenso-mailserver
+    ports:
+      - "9000:9000"  # Web UI
+      - "2500:2500"  # SMTP
+      - "1100:1100"  # POP3
+    environment:
+      - INBUCKET_SMTP_DISABLED=false
+      - INBUCKET_POP3_DISABLED=false
+      - INBUCKET_WEB_DISABLED=false
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9000/api/v1/mailbox"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - documenso-network
+    restart: unless-stopped
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: documenso-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - documenso-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  minio_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  documenso-network:
+    driver: bridge 

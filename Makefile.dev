@@ -1,0 +1,89 @@
+# Development Docker Commands
+# Usage: make <command>
+
+.PHONY: help setup start stop restart logs clean shell db-migrate db-seed db-reset db-studio
+
+# Default target
+help:
+	@echo "Documenso Development Commands:"
+	@echo ""
+	@echo "  setup      - Set up the development environment (first time)"
+	@echo "  start      - Start all services"
+	@echo "  stop       - Stop all services"
+	@echo "  restart    - Restart all services"
+	@echo "  logs       - View logs from all services"
+	@echo "  logs-app   - View logs from app service only"
+	@echo "  clean      - Stop and remove all containers and volumes"
+	@echo "  shell      - Access the app container shell"
+	@echo "  db-migrate - Run database migrations"
+	@echo "  db-seed    - Seed the database"
+	@echo "  db-reset   - Reset the database"
+	@echo "  db-studio  - Open Prisma Studio"
+	@echo "  build      - Rebuild the app container"
+	@echo "  status     - Show status of all services"
+
+# Set up development environment
+setup:
+	@echo "🚀 Setting up Documenso development environment..."
+	@./scripts/dev-setup.sh
+
+# Start all services
+start:
+	@echo "🐳 Starting development services..."
+	@docker-compose -f docker-compose.dev.yml up -d
+
+# Stop all services
+stop:
+	@echo "🛑 Stopping development services..."
+	@docker-compose -f docker-compose.dev.yml down
+
+# Restart all services
+restart:
+	@echo "🔄 Restarting development services..."
+	@docker-compose -f docker-compose.dev.yml restart
+
+# View logs from all services
+logs:
+	@docker-compose -f docker-compose.dev.yml logs -f
+
+# View logs from app service only
+logs-app:
+	@docker-compose -f docker-compose.dev.yml logs -f app
+
+# Clean up everything
+clean:
+	@echo "🧹 Cleaning up development environment..."
+	@docker-compose -f docker-compose.dev.yml down -v
+	@docker system prune -f
+
+# Access app container shell
+shell:
+	@docker-compose -f docker-compose.dev.yml exec app sh
+
+# Database operations
+db-migrate:
+	@echo "🗄️  Running database migrations..."
+	@docker-compose -f docker-compose.dev.yml exec app npm run prisma:migrate-dev
+
+db-seed:
+	@echo "🌱 Seeding the database..."
+	@docker-compose -f docker-compose.dev.yml exec app npm run prisma:seed
+
+db-reset:
+	@echo "🔄 Resetting the database..."
+	@docker-compose -f docker-compose.dev.yml exec app npm run prisma:migrate-reset
+
+db-studio:
+	@echo "📊 Opening Prisma Studio..."
+	@docker-compose -f docker-compose.dev.yml exec app npm run prisma:studio
+
+# Rebuild app container
+build:
+	@echo "🔨 Rebuilding app container..."
+	@docker-compose -f docker-compose.dev.yml build app
+	@docker-compose -f docker-compose.dev.yml up -d app
+
+# Show status of all services
+status:
+	@echo "📊 Development services status:"
+	@docker-compose -f docker-compose.dev.yml ps 
