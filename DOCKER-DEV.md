@@ -1,100 +1,174 @@
 # Docker Development Setup
 
-This guide will help you set up Documenso for local development using Docker.
-
-## Prerequisites
-
-- [Docker](https://docs.docker.com/get-docker/) (version 20.10 or later)
-- [Docker Compose](https://docs.docker.com/compose/install/) (version 2.0 or later)
+This guide helps you set up Documenso for local development using Docker.
 
 ## Quick Start
 
-1. **Clone the repository** (if you haven't already):
-   ```bash
-   git clone https://github.com/documenso/documenso.git
-   cd documenso
-   ```
-
-2. **Run the setup script**:
+1. **Run the setup script:**
    ```bash
    ./scripts/dev-setup.sh
    ```
 
-   This script will:
-   - Create a `.env` file with development configuration
-   - Build and start all Docker containers
-   - Run database migrations
-   - Seed the database with initial data
+2. **Wait for startup** (takes a few minutes on first run)
 
-3. **Access the application**:
-   - Main app: http://localhost:3000
-   - Email testing: http://localhost:9000
-   - MinIO console: http://localhost:9001
-   - Database: localhost:54320
+3. **Access the application:**
+   - **App**: http://localhost:3000
+   - **Email Testing**: http://localhost:9000
+   - **MinIO Console**: http://localhost:9001
+
+## What Gets Created
+
+### Database Seeding
+The setup automatically seeds the database with:
+
+- **Admin User**: `admin@documenso.com` / `password`
+- **Example User**: `example@documenso.com` / `password`
+- **Sample Documents**: 8 example documents
+- **Sample Templates**: 4 templates
+- **Organization Settings**: Default signature preferences
+
+### Services
+- **PostgreSQL Database** (port 54320)
+- **MinIO** (S3-compatible storage, ports 9001/9002)
+- **Inbucket** (email testing, port 9000)
+- **Redis** (caching, port 6379)
+- **Documenso App** (port 3000)
+
+## Admin User
+
+The seeding process creates an admin user with full access:
+
+- **Email**: `admin@documenso.com`
+- **Password**: `password`
+- **Role**: Admin (can access admin features)
+
+## Signature Settings
+
+The seed creates proper organization and team settings with all signature types enabled:
+- ✅ Typed signatures
+- ✅ Upload signatures  
+- ✅ Draw signatures
+
+This fixes the "Sign Here" field issue in the signup form.
+
+## Development Approach
+
+This setup uses **built code** rather than mounted source code for development. This means:
+
+### Advantages:
+- ✅ More stable and production-like environment
+- ✅ Faster container startup (no volume mounting)
+- ✅ Consistent behavior across different environments
+- ✅ Better isolation from host system
+
+### Trade-offs:
+- ⚠️ Code changes require rebuilding the container
+- ⚠️ No hot reloading of source code changes
+- ⚠️ Longer iteration cycle for development
+
+### Making Code Changes:
+To apply code changes, you need to rebuild the container:
+
+```bash
+# Rebuild and restart the app container
+docker-compose -f docker-compose.dev.yml up --build -d app
+
+# Or rebuild all services
+docker-compose -f docker-compose.dev.yml up --build -d
+```
+
+## Useful Commands
+
+```bash
+# View logs
+docker-compose -f docker-compose.dev.yml logs -f
+
+# Stop services
+docker-compose -f docker-compose.dev.yml down
+
+# Restart app
+docker-compose -f docker-compose.dev.yml restart app
+
+# Rebuild app after code changes
+docker-compose -f docker-compose.dev.yml up --build -d app
+
+# Access app shell
+docker-compose -f docker-compose.dev.yml exec app sh
+
+# View database
+docker-compose -f docker-compose.dev.yml exec database psql -U documenso -d documenso
+```
+
+## Troubleshooting
+
+### Signup Form Issues
+If the "Sign Here" field doesn't work:
+1. Ensure the database has been seeded
+2. Check that organization settings exist
+3. Verify signature type flags are enabled
+
+### Database Connection Issues
+- Check if PostgreSQL container is running
+- Verify environment variables in `.env`
+- Check logs: `docker-compose -f docker-compose.dev.yml logs database`
+
+### Email Issues
+- Check Inbucket at http://localhost:9000
+- Verify SMTP settings in environment variables
+
+### Code Changes Not Reflecting
+- Rebuild the container: `docker-compose -f docker-compose.dev.yml up --build -d app`
+- Check that the build completed successfully
+- Verify the new code is in the container
 
 ## Manual Setup
 
-If you prefer to set up manually or the script doesn't work for you:
+If you prefer manual setup:
 
-### 1. Create Environment File
+1. **Create environment file:**
+   ```bash
+   cp .env.example .env
+   ```
 
-Create a `.env` file in the root directory with the following content:
+2. **Start services:**
+   ```bash
+   docker-compose -f docker-compose.dev.yml up -d
+   ```
 
-```env
-# Database Configuration
-DATABASE_URL="postgresql://documenso:password@localhost:54320/documenso"
+3. **Run migrations and seed:**
+   ```bash
+   docker-compose -f docker-compose.dev.yml exec app npm run prisma:migrate-dev
+   docker-compose -f docker-compose.dev.yml exec app npm run prisma:seed
+   ```
 
-# App Configuration
+## Environment Variables
+
+Key environment variables for development:
+
+```bash
+# Database
+DATABASE_URL="postgresql://documenso:password@database:5432/documenso"
+NEXT_PRIVATE_DATABASE_URL="postgresql://documenso:password@database:5432/documenso"
+NEXT_PRIVATE_DIRECT_DATABASE_URL="postgresql://documenso:password@database:5432/documenso"
+
+# App
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
-NEXT_PUBLIC_API_URL="http://localhost:3000"
-
-# Encryption Keys (for development only)
-NEXT_PRIVATE_ENCRYPTION_KEY="CAFEBABE"
-NEXT_PRIVATE_ENCRYPTION_SECONDARY_KEY="DEADBEEF"
-
-# S3/MinIO Configuration
-NEXT_PRIVATE_S3_ENDPOINT="http://localhost:9002"
-NEXT_PRIVATE_S3_ACCESS_KEY="documenso"
-NEXT_PRIVATE_S3_SECRET_KEY="password"
-NEXT_PRIVATE_S3_BUCKET="documenso"
-NEXT_PRIVATE_S3_REGION="us-east-1"
-
-# SMTP Configuration (Inbucket)
-NEXT_PRIVATE_SMTP_HOST="localhost"
-NEXT_PRIVATE_SMTP_PORT="2500"
-NEXT_PRIVATE_SMTP_USER="documenso"
-NEXT_PRIVATE_SMTP_PASSWORD="password"
-NEXT_PRIVATE_SMTP_FROM="noreply@documenso.local"
-
-# Redis Configuration (optional)
-REDIS_URL="redis://localhost:6379"
-
-# Authentication
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="your-secret-key-here"
 
-# Feature Flags
-NEXT_PUBLIC_FEATURE_FLAG_BILLING="true"
-NEXT_PUBLIC_FEATURE_FLAG_TEAMS="true"
+# Storage
+NEXT_PRIVATE_S3_ENDPOINT="http://minio:9000"
+NEXT_PRIVATE_S3_ACCESS_KEY="documenso"
+NEXT_PRIVATE_S3_SECRET_KEY="password"
 
-# Development Settings
-NODE_ENV="development"
-```
+# Email
+NEXT_PRIVATE_SMTP_HOST="mailserver"
+NEXT_PRIVATE_SMTP_PORT="2500"
+NEXT_PRIVATE_SMTP_FROM="noreply@documenso.local"
 
-### 2. Start Services
-
-```bash
-# Build and start all services
-docker-compose -f docker-compose.dev.yml up --build -d
-
-# Wait for services to be ready (about 30 seconds)
-sleep 30
-
-# Run database migrations
-docker-compose -f docker-compose.dev.yml exec app npm run prisma:migrate-dev
-
-# Seed the database
-docker-compose -f docker-compose.dev.yml exec app npm run prisma:seed
+# Jobs
+NEXT_PRIVATE_JOBS_PROVIDER="local"
+NEXT_PRIVATE_INTERNAL_WEBAPP_URL="http://localhost:3000"
 ```
 
 ## Services Overview

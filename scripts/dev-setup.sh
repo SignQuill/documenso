@@ -70,24 +70,19 @@ fi
 echo "🐳 Building and starting Docker containers..."
 docker-compose -f docker-compose.dev.yml up --build -d
 
-# Wait for services to be ready
-echo "⏳ Waiting for services to be ready..."
-sleep 30
-
-# Run database migrations
-echo "🗄️  Running database migrations..."
-docker-compose -f docker-compose.dev.yml exec app npm run prisma:migrate-dev
-
-# Seed the database
-echo "🌱 Seeding the database..."
-docker-compose -f docker-compose.dev.yml exec app npm run prisma:seed
-
-echo "🎉 Development environment is ready!"
+echo "🎉 Development environment is starting!"
 echo ""
 echo "📱 Application: http://localhost:3000"
 echo "📧 Email Testing: http://localhost:9000"
 echo "🗄️  MinIO Console: http://localhost:9001"
 echo "🗄️  Database: localhost:54320"
+echo ""
+echo "⏳ The application is starting up. This may take a few minutes for the first run."
+echo "   Check logs with: docker-compose -f docker-compose.dev.yml logs -f app"
+echo ""
+echo "🔑 Admin User Credentials (created during seeding):"
+echo "   Email: admin@documenso.com"
+echo "   Password: password"
 echo ""
 echo "🔧 Useful commands:"
 echo "  - View logs: docker-compose -f docker-compose.dev.yml logs -f"

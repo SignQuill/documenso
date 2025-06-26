@@ -11,14 +11,6 @@ services:
     container_name: documenso-app
     ports:
       - "3000:3000"
-    volumes:
-      # Mount source code for hot reloading
-      - .:/app
-      - /app/node_modules
-      - /app/apps/remix/node_modules
-      - /app/apps/documentation/node_modules
-      - /app/apps/openpage-api/node_modules
-      - /app/packages/*/node_modules
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://documenso:password@database:5432/documenso
@@ -28,7 +20,7 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:3000
       - NEXT_PRIVATE_ENCRYPTION_KEY=CAFEBABE
       - NEXT_PRIVATE_ENCRYPTION_SECONDARY_KEY=DEADBEEF
-      - NEXT_PRIVATE_S3_ENDPOINT=http://minio:9002
+      - NEXT_PRIVATE_S3_ENDPOINT=http://minio:9000
       - NEXT_PRIVATE_S3_ACCESS_KEY=documenso
       - NEXT_PRIVATE_S3_SECRET_KEY=password
       - NEXT_PRIVATE_S3_BUCKET=documenso
@@ -38,6 +30,13 @@ services:
       - NEXT_PRIVATE_SMTP_USER=documenso
       - NEXT_PRIVATE_SMTP_PASSWORD=password
       - NEXT_PRIVATE_SMTP_FROM=noreply@documenso.local
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=your-secret-key-here
+      - NEXT_PRIVATE_JOBS_PROVIDER=local
+      - NEXT_PRIVATE_INTERNAL_WEBAPP_URL=http://localhost:3000
+      - NEXT_PUBLIC_FEATURE_FLAG_BILLING=true
+      - NEXT_PUBLIC_FEATURE_FLAG_TEAMS=true
+      - REDIS_URL=redis://redis:6379
     depends_on:
       database:
         condition: service_healthy
@@ -45,9 +44,12 @@ services:
         condition: service_started
       mailserver:
         condition: service_started
+      redis:
+        condition: service_started
     networks:
       - documenso-network
     restart: unless-stopped
+    command: ["sh", "/app/scripts/docker-startup.sh"]
 
   # PostgreSQL Database
   database:

@@ -45,7 +45,7 @@ COPY packages/ui/package.json ./packages/ui/
 # Copy package-lock.json after all package.json files are in place
 COPY package-lock.json ./
 
-# Install dependencies (using npm install for development)
+# Install dependencies
 RUN npm install
 
 # Copy source code
@@ -53,6 +53,9 @@ COPY . .
 
 # Generate Prisma client
 RUN npm run prisma:generate
+
+# Compile translations
+RUN npm run translate:compile
 
 # Expose port
 EXPOSE 3000
