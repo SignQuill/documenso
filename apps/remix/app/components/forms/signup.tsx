@@ -349,7 +349,7 @@ export const SignUpForm = ({
               <p className="text-muted-foreground mt-4 text-sm">
                 <Trans>
                   Already have an account?{' '}
-                  <Link to="/signin" className="text-documenso-700 duration-200 hover:opacity-70">
+                  <Link to="/signin" className="text-documenso-500 duration-200 hover:opacity-70">
                     Sign in instead
                   </Link>
                 </Trans>
@@ -372,7 +372,7 @@ export const SignUpForm = ({
             <Link
               to="https://documen.so/terms"
               target="_blank"
-              className="text-documenso-700 duration-200 hover:opacity-70"
+              className="text-documenso-500 duration-200 hover:opacity-70"
             >
               Terms of Service
             </Link>{' '}
@@ -380,7 +380,7 @@ export const SignUpForm = ({
             <Link
               to="https://documen.so/privacy"
               target="_blank"
-              className="text-documenso-700 duration-200 hover:opacity-70"
+              className="text-documenso-500 duration-200 hover:opacity-70"
             >
               Privacy Policy
             </Link>

@@ -212,7 +212,7 @@ export default function SigningPage() {
           </p>
 
           {user ? (
-            <Link to="/" className="text-documenso-700 hover:text-documenso-600 mt-36">
+            <Link to="/" className="text-documenso-500 hover:text-documenso-500 mt-36">
               <Trans>Go Back Home</Trans>
             </Link>
           ) : (
@@ -221,7 +221,7 @@ export default function SigningPage() {
                 Want to send slick signing links like this one?{' '}
                 <Link
                   to="https://documenso.com"
-                  className="text-documenso-700 hover:text-documenso-600"
+                  className="text-documenso-500 hover:text-documenso-600"
                 >
                   Check out Documenso.
                 </Link>

@@ -155,7 +155,7 @@ export default function CompletedSigningPage({ loaderData }: Route.ComponentProp
 
           {match({ status: document.status, deletedAt: document.deletedAt })
             .with({ status: DocumentStatus.COMPLETED }, () => (
-              <div className="text-documenso-700 mt-4 flex items-center text-center">
+              <div className="text-documenso-500 mt-4 flex items-center text-center">
                 <CheckCircle2 className="mr-2 h-5 w-5" />
                 <span className="text-sm">
                   <Trans>Everyone has signed</Trans>
@@ -249,7 +249,7 @@ export default function CompletedSigningPage({ loaderData }: Route.ComponentProp
           )}
 
           {user && (
-            <Link to="/" className="text-documenso-700 hover:text-documenso-600 mt-2">
+            <Link to="/" className="text-documenso-500 hover:text-documenso-500 mt-2">
               <Trans>Go Back Home</Trans>
             </Link>
           )}

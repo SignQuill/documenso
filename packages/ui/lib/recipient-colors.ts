@@ -73,8 +73,8 @@ export const RECIPIENT_COLOR_STYLES = {
 export type CombinedStylesKey = keyof typeof RECIPIENT_COLOR_STYLES;
 
 export const AVAILABLE_RECIPIENT_COLORS = [
-  'green',
   'blue',
+  'green',
   'purple',
   'orange',
   'yellow',

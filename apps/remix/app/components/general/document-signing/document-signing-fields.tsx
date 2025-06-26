@@ -12,7 +12,7 @@ export const DocumentSigningFieldsLoader = () => {
 
 export const DocumentSigningFieldsUninserted = ({ children }: { children: React.ReactNode }) => {
   return (
-    <p className="group-hover:text-primary text-foreground group-hover:text-recipient-green text-[clamp(0.425rem,25cqw,0.825rem)] duration-200">
+    <p className="group-hover:text-primary text-foreground group-hover:text-recipient-blue text-[clamp(0.425rem,25cqw,0.825rem)] duration-200">
       {children}
     </p>
   );

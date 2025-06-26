@@ -131,7 +131,7 @@ export const DocumentSigningFieldContainer = ({
 
   return (
     <div className={cn('[container-type:size]')}>
-      <FieldRootContainer color={RECIPIENT_COLOR_STYLES.green} field={field}>
+      <FieldRootContainer color={RECIPIENT_COLOR_STYLES.blue} field={field}>
         {!field.inserted && !loading && !readOnlyField && (
           <button
             type="submit"
