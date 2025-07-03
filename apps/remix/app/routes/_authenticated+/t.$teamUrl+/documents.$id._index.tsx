@@ -110,7 +110,10 @@ export default function DocumentPage() {
         <DocumentRecipientLinkCopyDialog recipients={recipients} />
       )}
 
-      <Link to={documentRootPath} className="flex items-center text-[#002864] hover:opacity-80">
+      <Link
+        to={documentRootPath}
+        className="flex items-center text-[#002864] hover:opacity-80 dark:text-white"
+      >
         <ChevronLeft className="mr-2 inline-block h-5 w-5" />
         <Trans>Documents</Trans>
       </Link>

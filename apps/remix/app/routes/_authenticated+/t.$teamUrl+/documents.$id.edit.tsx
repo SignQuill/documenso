@@ -94,7 +94,10 @@ export default function DocumentEditPage() {
 
   return (
     <div className="mx-auto -mt-4 w-full max-w-screen-xl px-4 md:px-8">
-      <Link to={documentRootPath} className="flex items-center text-[#002864] hover:opacity-80">
+      <Link
+        to={documentRootPath}
+        className="flex items-center text-[#002864] hover:opacity-80 dark:text-white"
+      >
         <ChevronLeft className="mr-2 inline-block h-5 w-5" />
         <Trans>Documents</Trans>
       </Link>

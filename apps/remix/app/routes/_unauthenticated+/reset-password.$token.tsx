@@ -45,7 +45,10 @@ export default function ResetPasswordPage({ loaderData }: Route.ComponentProps) 
         <p className="text-muted-foreground mt-6 text-center text-sm">
           <Trans>
             Don't have an account?{' '}
-            <Link to="/signup" className="text-primary duration-200 hover:opacity-70">
+            <Link
+              to="/signup"
+              className="dark:text-documenso-500 text-primary duration-200 hover:opacity-70"
+            >
               Sign up
             </Link>
           </Trans>

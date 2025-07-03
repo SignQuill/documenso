@@ -29,8 +29,8 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
 
-    --primary: 216, 100%, 20%, 1; /*changed from green to blue */
-    --primary-foreground: 0, 0%, 100%, 1; /*changed from black to white */
+    --primary: 216 100% 20%; /*changed from green to blue */
+    --primary-foreground: 0 0% 100%; /*changed from black to white */
 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -162,19 +162,19 @@
 
     --field-border: 214.3 31.8% 91.4%;
 
-    --primary: 95.08 71.08% 67.45%;
-    --primary-foreground: 0, 0%, 100%, 1;
+    --primary: 216 100% 20%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 23.4%;
-    --secondary-foreground: 95.08 71.08% 67.45%;
+    --secondary-foreground: 196 67% 45%;
 
     --accent: 0 0% 27.9%;
-    --accent-foreground: 95.08 71.08% 67.45%;
+    --accent-foreground: 196 67% 45%;
 
     --destructive: 0 87% 62%;
     --destructive-foreground: 0 87% 19%;
 
-    --ring:  216, 100%, 20%; /*changed from green to blue */
+    --ring:  216 100% 20% ; /*changed from green to blue */
 
     --radius: 0.5rem;
 

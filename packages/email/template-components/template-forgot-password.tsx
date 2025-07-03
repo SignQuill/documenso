@@ -14,7 +14,7 @@ export const TemplateForgotPassword = ({
 }: TemplateForgotPasswordProps) => {
   return (
     <>
-      <TemplateDocumentImage className="mt-6" assetBaseUrl={assetBaseUrl} />
+      <TemplateDocumentImage className="mt-0" assetBaseUrl={assetBaseUrl} />
 
       <Section className="flex-row items-center justify-center">
         <Text className="text-primary mx-auto mb-0 max-w-[80%] text-center text-lg font-semibold">
@@ -27,7 +27,7 @@ export const TemplateForgotPassword = ({
 
         <Section className="mb-6 mt-8 text-center">
           <Button
-            className="bg-documenso-500 inline-flex items-center justify-center rounded-lg px-6 py-3 text-center text-sm font-medium text-black no-underline"
+            className="dark:bg-documenso bg-documenso-500 inline-flex items-center justify-center rounded-lg px-6 py-3 text-center text-sm font-medium text-white no-underline"
             href={resetPasswordLink}
           >
             <Trans>Reset Password</Trans>

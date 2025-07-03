@@ -72,7 +72,7 @@ module.exports = {
           200: '#E7F9DA',
           300: '#D0F3B7',
           400: '#B9ED94',
-          500: '#002864' /* changed from green to blue */,
+          500: '#2596be' /* changed from green to blue */,
           600: '#001f4d',
           700: '#66C622',
           800: '#4D9619',

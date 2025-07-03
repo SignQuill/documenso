@@ -28,7 +28,10 @@ export default function ForgotPasswordPage() {
         <p className="text-muted-foreground mt-6 text-center text-sm">
           <Trans>
             Remembered your password?{' '}
-            <Link to="/signin" className="text-primary duration-200 hover:opacity-70">
+            <Link
+              to="/signin"
+              className="dark:text-documenso-500 text-primary duration-200 hover:opacity-70"
+            >
               Sign In
             </Link>
           </Trans>
