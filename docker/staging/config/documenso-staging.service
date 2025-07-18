@@ -1,0 +1,32 @@
+# =============================================================================
+# Documenso Staging Systemd Service File
+# =============================================================================
+# 
+# This systemd service file manages the Documenso staging environment.
+# It provides:
+# - Automatic startup on boot
+# - Proper dependency management (requires Docker)
+# - User/group security (runs as documenso user)
+# - Start/stop functionality
+#
+# Installation: Copy to /etc/systemd/system/
+# Enable: systemctl enable documenso-staging
+# Start: systemctl start documenso-staging
+# =============================================================================
+
+[Unit]
+Description=Documenso Staging Environment
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/documenso
+ExecStart=/usr/bin/docker-compose -f /opt/documenso/docker/staging/compose.yml up -d
+ExecStop=/usr/bin/docker-compose -f /opt/documenso/docker/staging/compose.yml down
+User=documenso
+Group=documenso
+
+[Install]
+WantedBy=multi-user.target 

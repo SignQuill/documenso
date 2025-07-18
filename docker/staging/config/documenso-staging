@@ -1,0 +1,27 @@
+# =============================================================================
+# Documenso Staging Logrotate Configuration
+# =============================================================================
+# 
+# This logrotate configuration manages log files for the Documenso staging environment.
+# It provides:
+# - Daily log rotation
+# - Compression of old logs
+# - Retention of 7 days of logs
+# - Automatic service restart after rotation
+# - Proper file permissions
+#
+# Installation: Copy to /etc/logrotate.d/
+# =============================================================================
+
+/var/log/documenso/*.log {
+    daily
+    missingok
+    rotate 7
+    compress
+    delaycompress
+    notifempty
+    create 644 documenso documenso
+    postrotate
+        docker-compose -f /opt/documenso/docker/staging/compose.yml restart
+    endscript
+} 
