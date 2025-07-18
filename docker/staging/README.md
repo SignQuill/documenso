@@ -20,51 +20,54 @@ docker/staging/
 ├── env.example            # Environment variables template
 ├── build.sh               # Build script
 ├── deploy.sh              # Deployment script
-├── setup-ec2.sh          # EC2 server setup script
 ├── README.md             # This file
-├── scripts/               # Management scripts
-│   ├── monitor-documenso-staging.sh
-│   ├── deploy-documenso-staging.sh
-│   └── backup-documenso-staging.sh
-└── config/                # Configuration files
-    ├── documenso-staging.service
-    └── documenso-staging
+└── terraform/             # Infrastructure as Code
+    └── staging/
+        ├── main.tf
+        ├── variables.tf
+        ├── outputs.tf
+        ├── user-data.sh
+        ├── terraform.tfvars.example
+        └── README.md
 ```
 
 ## Quick Start
 
-### 1. EC2 Server Setup
+### Option 1: Manual Deployment
 
-First, run the EC2 setup script on your Amazon Linux instance:
-
-```bash
-# Download and run the setup script
-curl -O https://raw.githubusercontent.com/documenso/documenso/main/docker/staging/setup-ec2.sh
-chmod +x setup-ec2.sh
-sudo ./setup-ec2.sh
-```
-
-### 2. Clone Repository
+If you have an existing EC2 instance:
 
 ```bash
 # Clone the repository
 sudo -u documenso git clone https://github.com/documenso/documenso.git /opt/documenso
 cd /opt/documenso
-```
 
-### 3. Configure Environment
-
-```bash
-# Copy and configure environment variables
+# Configure environment
 cp docker/staging/env.example docker/staging/.env
 nano docker/staging/.env
-```
 
-### 4. Deploy
-
-```bash
 # Deploy the staging environment
 sudo -u documenso /usr/local/bin/deploy-documenso-staging
+```
+
+### Option 2: Infrastructure as Code (Recommended)
+
+Use Terraform to deploy the complete infrastructure:
+
+```bash
+# Navigate to Terraform directory
+cd terraform/staging
+
+# Configure variables
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars with your SSH public key
+
+# Deploy infrastructure
+terraform init
+terraform plan
+terraform apply
+
+# Follow the deployment instructions in the Terraform output
 ```
 
 ## Environment Configuration
@@ -169,9 +172,11 @@ docker-compose -f /opt/documenso/docker/staging/compose.yml restart
 docker-compose -f /opt/documenso/docker/staging/compose.yml logs -f
 ```
 
+> **Note**: When using Terraform deployment, all management scripts are automatically installed on the EC2 instance.
+
 ## Systemd Service
 
-The setup script creates a systemd service for automatic startup:
+The Terraform user data script creates a systemd service for automatic startup:
 
 ```bash
 # Enable service (starts on boot)
