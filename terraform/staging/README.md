@@ -17,9 +17,11 @@ The Terraform configuration creates:
 ```
 terraform/staging/
 ├── main.tf                    # Main Terraform configuration
+├── backend.tf                 # S3 backend configuration
 ├── variables.tf               # Variable definitions
 ├── outputs.tf                 # Output values
 ├── user-data.sh              # EC2 instance initialization script
+├── setup-backend.sh          # S3 backend setup script
 ├── terraform.tfvars.example  # Example variables file
 └── README.md                 # This file
 ```
@@ -29,6 +31,7 @@ terraform/staging/
 1. **Terraform** (version >= 1.0)
 2. **AWS CLI** configured with appropriate credentials
 3. **SSH Key Pair** for EC2 access
+4. **AWS Permissions** for S3, DynamoDB, EC2, VPC, IAM
 
 ## Quick Start
 
@@ -44,7 +47,23 @@ export AWS_SECRET_ACCESS_KEY="your_secret_key"
 export AWS_DEFAULT_REGION="us-east-1"
 ```
 
-### 2. Generate SSH Key Pair
+### 2. Set Up S3 Backend (One-time setup)
+
+```bash
+# Make the setup script executable
+chmod +x setup-backend.sh
+
+# Run the backend setup script
+./setup-backend.sh
+```
+
+This script creates:
+- S3 bucket: `documenso-terraform-state`
+- DynamoDB table: `documenso-terraform-locks`
+- Enables encryption and versioning
+- Sets up proper security policies
+
+### 3. Generate SSH Key Pair
 
 ```bash
 # Generate SSH key pair
@@ -54,7 +73,7 @@ ssh-keygen -t rsa -b 4096 -f ~/.ssh/documenso-staging -N ""
 cat ~/.ssh/documenso-staging.pub
 ```
 
-### 3. Configure Variables
+### 4. Configure Variables
 
 ```bash
 # Copy example variables file
@@ -64,10 +83,10 @@ cp terraform.tfvars.example terraform.tfvars
 nano terraform.tfvars
 ```
 
-### 4. Deploy Infrastructure
+### 5. Deploy Infrastructure
 
 ```bash
-# Initialize Terraform
+# Initialize Terraform (this will configure the S3 backend)
 terraform init
 
 # Plan the deployment
@@ -77,9 +96,85 @@ terraform plan
 terraform apply
 ```
 
-### 5. Deploy Application
+### 6. Deploy Application
 
 After the infrastructure is deployed, follow the instructions in the Terraform output to deploy the Documenso application.
+
+## S3 Backend Configuration
+
+### What is the S3 Backend?
+
+The S3 backend provides:
+- **Remote State Storage**: State files stored securely in S3
+- **State Locking**: Prevents concurrent modifications using DynamoDB
+- **Encryption**: All state data is encrypted at rest
+- **Versioning**: State history for rollback capabilities
+- **Team Collaboration**: Multiple team members can work safely
+
+### Backend Setup Details
+
+The `setup-backend.sh` script creates:
+
+#### S3 Bucket (`documenso-terraform-state`)
+- **Versioning**: Enabled for state history
+- **Encryption**: AES256 server-side encryption
+- **Public Access**: Blocked for security
+- **Bucket Policy**: Enforces encryption on uploads
+
+#### DynamoDB Table (`documenso-terraform-locks`)
+- **Purpose**: State locking to prevent conflicts
+- **Capacity**: 5 read/write units (sufficient for staging)
+- **Region**: Same as S3 bucket
+
+### Backend Configuration
+
+The backend is configured in `backend.tf`:
+
+```hcl
+terraform {
+  backend "s3" {
+    bucket         = "documenso-terraform-state"
+    key            = "staging/terraform.tfstate"
+    region         = "us-east-1"
+    encrypt        = true
+    dynamodb_table = "documenso-terraform-locks"
+  }
+}
+```
+
+### Required AWS Permissions
+
+Your AWS user/role needs these permissions:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket",
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::documenso-terraform-state",
+        "arn:aws:s3:::documenso-terraform-state/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:DeleteItem"
+      ],
+      "Resource": "arn:aws:dynamodb:us-east-1:*:table/documenso-terraform-locks"
+    }
+  ]
+}
+```
 
 ## Configuration
 
@@ -138,6 +233,7 @@ The EC2 instance runs a user data script that:
 4. Sets up application directories
 5. Configures firewall rules
 6. Creates health check scripts
+7. Installs management scripts and systemd service
 
 ## Outputs
 
@@ -176,6 +272,19 @@ terraform apply
 terraform destroy
 ```
 
+### Working with Remote State
+
+```bash
+# Pull latest state
+terraform refresh
+
+# Import existing resources
+terraform import aws_instance.staging i-1234567890abcdef0
+
+# Move resources
+terraform state mv aws_instance.old aws_instance.new
+```
+
 ## Monitoring and Logging
 
 ### CloudWatch Integration
@@ -201,6 +310,12 @@ The user data script creates a health check script at `/usr/local/bin/health-che
 - **User Permissions**: Non-root user for application
 - **Firewall Rules**: OS-level firewall configuration
 
+### State Security
+- **Encrypted State**: All state data encrypted in S3
+- **State Locking**: Prevents concurrent modifications
+- **Access Control**: IAM policies control access
+- **Versioning**: State history for audit trails
+
 ### Production Recommendations
 1. **Restrict SSH Access**: Limit to specific IP ranges
 2. **Use Private Subnets**: Move application to private subnets
@@ -208,12 +323,35 @@ The user data script creates a health check script at `/usr/local/bin/health-che
 4. **Enable CloudTrail**: For audit logging
 5. **Use AWS Secrets Manager**: For sensitive configuration
 6. **Add Monitoring**: CloudWatch alarms and dashboards
+7. **Rotate Keys**: Regular SSH key rotation
+8. **Backup State**: Regular state backups
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **SSH Connection Failed**
+1. **Backend Setup Failed**
+   ```bash
+   # Check AWS permissions
+   aws sts get-caller-identity
+   
+   # Verify bucket exists
+   aws s3 ls s3://documenso-terraform-state
+   
+   # Check DynamoDB table
+   aws dynamodb describe-table --table-name documenso-terraform-locks
+   ```
+
+2. **State Lock Issues**
+   ```bash
+   # Force unlock (use with caution)
+   terraform force-unlock <lock-id>
+   
+   # Check lock status
+   aws dynamodb scan --table-name documenso-terraform-locks
+   ```
+
+3. **SSH Connection Failed**
    ```bash
    # Check security group rules
    aws ec2 describe-security-groups --group-ids <sg-id>
@@ -222,7 +360,7 @@ The user data script creates a health check script at `/usr/local/bin/health-che
    ssh -i ~/.ssh/documenso-staging -v ec2-user@<public-ip>
    ```
 
-2. **Application Not Accessible**
+4. **Application Not Accessible**
    ```bash
    # Check application status
    ssh -i ~/.ssh/documenso-staging ec2-user@<public-ip>
@@ -230,13 +368,16 @@ The user data script creates a health check script at `/usr/local/bin/health-che
    docker-compose -f /opt/documenso/docker/staging/compose.yml logs
    ```
 
-3. **Terraform Errors**
+5. **Terraform Errors**
    ```bash
    # Validate configuration
    terraform validate
    
    # Check state
    terraform state list
+   
+   # Refresh state
+   terraform refresh
    ```
 
 ### Logs and Debugging
@@ -251,6 +392,9 @@ sudo journalctl -f
 
 # View Docker logs
 docker logs <container-name>
+
+# Check Terraform state
+terraform show
 ```
 
 ## Cost Optimization
@@ -267,6 +411,11 @@ docker logs <container-name>
 ### Network Optimization
 - **Elastic IP**: Free when attached to running instance
 - **Data Transfer**: Monitor and optimize
+
+### Backend Costs
+- **S3 Storage**: ~$0.023 per GB/month
+- **DynamoDB**: ~$1.25 per month (5 units)
+- **Total**: ~$2-3 per month for backend
 
 ## Support
 
