@@ -24,6 +24,9 @@ export default defineConfig({
     port: 3000,
     strictPort: true,
     host: '0.0.0.0',
+    allowedHosts: process.env.NEXT_PUBLIC_WEBAPP_URL 
+      ? [new URL(process.env.NEXT_PUBLIC_WEBAPP_URL).hostname, 'localhost'] 
+      : ['localhost'],
   },
   plugins: [
     reactRouter(),

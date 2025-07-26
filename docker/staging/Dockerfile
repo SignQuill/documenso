@@ -60,5 +60,9 @@ RUN npm run translate:compile
 # Expose port
 EXPOSE 3000
 
+# Copy start script
+COPY docker/staging/start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
 # Default command for development
-CMD ["npm", "run", "dev"] 
+CMD ["/app/start.sh"] 
