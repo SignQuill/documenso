@@ -94,14 +94,17 @@ set -e
 
 cd /opt/documenso
 
-# Pull latest changes
+# Pull latest image from Docker Hub
+echo "📦 Pulling latest image from Docker Hub..."
+docker pull devopsways/sign-quill:staging
+
+# Pull latest changes (if using git)
 if [ -d ".git" ]; then
     git pull origin main
 fi
 
 # Deploy
 docker-compose -f docker/staging/compose.yml down --remove-orphans
-docker-compose -f docker/staging/compose.yml build --no-cache
 docker-compose -f docker/staging/compose.yml up -d
 
 echo "✅ Documenso staging deployment completed!"
@@ -149,27 +152,27 @@ BACKUP_NAME="documenso_staging_backup_$DATE"
 
 mkdir -p "$BACKUP_DIR"
 
-echo "Creating backup: $BACKUP_NAME"
+echo "Creating backup: $${BACKUP_NAME}"
 
 # Backup database
-docker exec documenso-staging-db pg_dump -U documenso documenso_staging > "$BACKUP_DIR/${BACKUP_NAME}_database.sql"
+docker exec documenso-staging-db pg_dump -U documenso documenso_staging > "$BACKUP_DIR/$${BACKUP_NAME}_database.sql"
 
 # Backup Redis
 docker exec documenso-staging-redis redis-cli BGSAVE
 sleep 2
-docker cp documenso-staging-redis:/data/dump.rdb "$BACKUP_DIR/${BACKUP_NAME}_redis.rdb"
+docker cp documenso-staging-redis:/data/dump.rdb "$BACKUP_DIR/$${BACKUP_NAME}_redis.rdb"
 
 # Create archive
-tar -czf "$BACKUP_DIR/${BACKUP_NAME}.tar.gz" \
+tar -czf "$BACKUP_DIR/$${BACKUP_NAME}.tar.gz" \
     -C "$BACKUP_DIR" \
-    "${BACKUP_NAME}_database.sql" \
-    "${BACKUP_NAME}_redis.rdb"
+    "$${BACKUP_NAME}_database.sql" \
+    "$${BACKUP_NAME}_redis.rdb"
 
 # Clean up individual files
-rm "$BACKUP_DIR/${BACKUP_NAME}_database.sql"
-rm "$BACKUP_DIR/${BACKUP_NAME}_redis.rdb"
+rm "$BACKUP_DIR/$${BACKUP_NAME}_database.sql"
+rm "$BACKUP_DIR/$${BACKUP_NAME}_redis.rdb"
 
-echo "✅ Backup created: $BACKUP_DIR/${BACKUP_NAME}.tar.gz"
+echo "✅ Backup created: $BACKUP_DIR/$${BACKUP_NAME}.tar.gz"
 EOF
 
 chmod +x /usr/local/bin/backup-documenso-staging
@@ -230,5 +233,5 @@ echo "User data script completed successfully at $(date)" >> /var/log/user-data.
 
 # Signal completion to CloudFormation (if using CloudFormation)
 if command -v cfn-signal >/dev/null 2>&1; then
-    cfn-signal -e 0 --stack ${AWS::StackName} --resource ${LogicalResourceId} --region ${AWS::Region}
+    cfn-signal -e 0 --stack "documenso-staging" --resource "EC2Instance" --region "ca-central-1"
 fi 

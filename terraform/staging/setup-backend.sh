@@ -44,7 +44,7 @@ print_step() {
 # Configuration
 BUCKET_NAME="documenso-terraform-state"
 DYNAMODB_TABLE="documenso-terraform-locks"
-REGION="us-east-1"
+REGION="ca-central-1"
 
 print_step "Setting up Terraform S3 backend..."
 

@@ -68,7 +68,7 @@ output "deployment_instructions" {
     
     Next steps:
     1. SSH into the instance:
-       ${ssh_command}
+       ssh -i ~/.ssh/${aws_key_pair.staging.key_name} ec2-user@${aws_eip.staging.public_ip}
     
     2. Clone the repository:
        sudo -u documenso git clone https://github.com/documenso/documenso.git /opt/documenso
@@ -81,7 +81,7 @@ output "deployment_instructions" {
        sudo -u documenso /usr/local/bin/deploy-documenso-staging
     
     5. Access the application:
-       ${application_url}
+       http://${aws_eip.staging.public_ip}:${var.app_port}
     
     Useful commands (already installed):
     - Deploy: /usr/local/bin/deploy-documenso-staging

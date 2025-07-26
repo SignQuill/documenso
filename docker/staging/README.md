@@ -1,26 +1,57 @@
 # Documenso Staging Environment
 
-This directory contains all the necessary files to deploy Documenso in a staging environment on Amazon Linux EC2.
+This directory contains all the necessary files to deploy Documenso in a staging environment on Amazon Linux EC2 using a private Docker Hub repository.
 
 ## Overview
 
 The staging environment includes:
-- **Documenso Application**: The main Remix application
+- **Documenso Application**: The main Remix application (pulled from Docker Hub)
 - **PostgreSQL Database**: For data persistence
 - **Redis**: For caching and session storage
 - **Docker & Docker Compose**: For containerization
+
+## Docker Hub Workflow
+
+### 1. Build and Push to Docker Hub
+
+```bash
+# Build the image locally for Amazon Linux EC2
+./build-local.sh
+
+# Or build and push in one step
+./push-to-dockerhub.sh
+```
+
+### 2. Docker Hub Authentication
+
+Before pushing to Docker Hub, you need to authenticate:
+
+```bash
+# Login to Docker Hub
+docker login
+
+# Or use the push script which will prompt for login
+./push-to-dockerhub.sh
+```
+
+### 3. Image Details
+
+- **Repository**: `devopsways/sign-quill`
+- **Tags**: `staging`, `latest`
+- **Platform**: `linux/amd64` (Amazon Linux EC2 compatible)
+- **Base Image**: `node:18-alpine`
 
 ## Files Structure
 
 ```
 docker/staging/
 ├── Dockerfile              # Staging-specific Dockerfile
-├── compose.yml             # Docker Compose configuration
-├── start.sh               # Application startup script
-├── env.example            # Environment variables template
-├── build.sh               # Build script
-├── deploy.sh              # Deployment script
-├── README.md             # This file
+├── compose.yml             # Docker Compose configuration (uses Docker Hub image)
+├── build-local.sh          # Local build script
+├── push-to-dockerhub.sh    # Build and push to Docker Hub
+├── deploy.sh               # Deployment script (pulls from Docker Hub)
+├── env.example             # Environment variables template
+├── README.md              # This file
 └── terraform/             # Infrastructure as Code
     └── staging/
         ├── main.tf
@@ -33,21 +64,14 @@ docker/staging/
 
 ## Quick Start
 
-### Option 1: Manual Deployment
-
-If you have an existing EC2 instance:
+### Option 1: Local Development
 
 ```bash
-# Clone the repository
-sudo -u documenso git clone https://github.com/documenso/documenso.git /opt/documenso
-cd /opt/documenso
+# Build and push to Docker Hub
+./build-local.sh
 
-# Configure environment
-cp docker/staging/env.example docker/staging/.env
-nano docker/staging/.env
-
-# Deploy the staging environment
-sudo -u documenso /usr/local/bin/deploy-documenso-staging
+# Deploy locally
+./deploy.sh
 ```
 
 ### Option 2: Infrastructure as Code (Recommended)
@@ -69,6 +93,26 @@ terraform apply
 
 # Follow the deployment instructions in the Terraform output
 ```
+
+## Build Process
+
+### Local Build
+
+The `build-local.sh` script:
+
+1. **Builds for target platform**: Uses `linux/amd64` for Amazon Linux EC2 compatibility
+2. **Multi-stage build**: Optimizes image size with proper layering
+3. **Production ready**: Uses Node.js 18 Alpine for smaller footprint
+4. **Standalone output**: Leverages Next.js standalone output for optimal performance
+
+### Docker Hub Push
+
+The `push-to-dockerhub.sh` script:
+
+1. **Checks Docker Hub authentication**
+2. **Builds image if needed**
+3. **Pushes both `staging` and `latest` tags**
+4. **Provides feedback and links**
 
 ## Environment Configuration
 
@@ -126,13 +170,12 @@ NEXT_PRIVATE_UPLOAD_SECRET_ACCESS_KEY=your_secret_key
 ### Deployment
 
 ```bash
-# Deploy the application
+# Deploy the application (pulls from Docker Hub)
 /usr/local/bin/deploy-documenso-staging
 
 # Or manually
 cd /opt/documenso
 docker-compose -f docker/staging/compose.yml down --remove-orphans
-docker-compose -f docker/staging/compose.yml build --no-cache
 docker-compose -f docker/staging/compose.yml up -d
 ```
 
@@ -219,7 +262,16 @@ For production use, consider:
 
 ### Common Issues
 
-1. **Application won't start**
+1. **Image pull fails**
+   ```bash
+   # Check Docker Hub authentication
+   docker login
+   
+   # Check image exists
+   docker pull devopsways/sign-quill:staging
+   ```
+
+2. **Application won't start**
    ```bash
    # Check logs
    docker-compose -f /opt/documenso/docker/staging/compose.yml logs
@@ -228,7 +280,7 @@ For production use, consider:
    docker-compose -f /opt/documenso/docker/staging/compose.yml config
    ```
 
-2. **Database connection issues**
+3. **Database connection issues**
    ```bash
    # Check database container
    docker exec -it documenso-staging-db psql -U documenso -d documenso_staging
@@ -237,7 +289,7 @@ For production use, consider:
    docker logs documenso-staging-db
    ```
 
-3. **Port conflicts**
+4. **Port conflicts**
    ```bash
    # Check what's using the port
    sudo netstat -tlnp | grep :3000
@@ -308,9 +360,24 @@ docker restart documenso-staging-redis
 cd /opt/documenso
 git pull origin main
 
-# Redeploy
+# Redeploy (will pull latest image from Docker Hub)
 /usr/local/bin/deploy-documenso-staging
 ```
+
+### Image Updates
+
+To update the application image:
+
+1. **Local development**:
+   ```bash
+   ./build-local.sh
+   ./push-to-dockerhub.sh
+   ```
+
+2. **On EC2 instance**:
+   ```bash
+   /usr/local/bin/deploy-documenso-staging
+   ```
 
 ### System Updates
 

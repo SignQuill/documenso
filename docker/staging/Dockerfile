@@ -1,39 +1,13 @@
-###########################
-#     BASE CONTAINER      #
-###########################
-FROM node:22-alpine3.20 AS base
+FROM node:22-alpine3.20
 
-RUN apk add --no-cache openssl
+# Install system dependencies
+RUN apk add --no-cache \
+    libc6-compat \
+    openssl \
+    bash \
+    git
 
-###########################
-#    BUILDER CONTAINER    #
-###########################
-FROM base AS builder
-
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
-RUN apk add --no-cache jq
-WORKDIR /app
-
-COPY . .
-
-RUN npm install -g "turbo@^1.9.3"
-
-# Outputs to the /out folder
-# source: https://turbo.build/repo/docs/reference/command-line-reference/prune#--docker
-RUN turbo prune --scope=@documenso/remix --docker
-
-###########################
-#   INSTALLER CONTAINER   #
-###########################
-FROM base AS installer
-
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
-RUN apk add --no-cache jq
-# Required for node_modules/aws-crt
-RUN apk add --no-cache make cmake g++ openssl bash
-
+# Set working directory
 WORKDIR /app
 
 # Disable husky from installing hooks
@@ -41,72 +15,50 @@ ENV HUSKY 0
 ENV DOCKER_OUTPUT 1
 ENV NEXT_TELEMETRY_DISABLED 1
 
-# Encryption keys for staging
-ARG NEXT_PRIVATE_ENCRYPTION_KEY="STAGING_KEY_123456789"
-ENV NEXT_PRIVATE_ENCRYPTION_KEY="$NEXT_PRIVATE_ENCRYPTION_KEY"
+# Copy package files first for better caching
+COPY package.json ./
+COPY turbo.json ./
+COPY lingui.config.ts ./
 
-ARG NEXT_PRIVATE_ENCRYPTION_SECONDARY_KEY="STAGING_SECONDARY_987654321"
-ENV NEXT_PRIVATE_ENCRYPTION_SECONDARY_KEY="$NEXT_PRIVATE_ENCRYPTION_SECONDARY_KEY"
+# Copy workspace package.json files
+COPY apps/remix/package.json ./apps/remix/
+COPY apps/documentation/package.json ./apps/documentation/
+COPY apps/openpage-api/package.json ./apps/openpage-api/
 
-# First install the dependencies (as they change less often)
-COPY .gitignore .gitignore
-COPY --from=builder /app/out/json/ .
-COPY --from=builder /app/out/package-lock.json ./package-lock.json
+# Copy packages package.json files (explicitly list them to avoid conflicts)
+COPY packages/api/package.json ./packages/api/
+COPY packages/app-tests/package.json ./packages/app-tests/
+COPY packages/assets/package.json ./packages/assets/
+COPY packages/auth/package.json ./packages/auth/
+COPY packages/ee/package.json ./packages/ee/
+COPY packages/email/package.json ./packages/email/
+COPY packages/eslint-config/package.json ./packages/eslint-config/
+COPY packages/lib/package.json ./packages/lib/
+COPY packages/prettier-config/package.json ./packages/prettier-config/
+COPY packages/prisma/package.json ./packages/prisma/
+COPY packages/signing/package.json ./packages/signing/
+COPY packages/tailwind-config/package.json ./packages/tailwind-config/
+COPY packages/trpc/package.json ./packages/trpc/
+COPY packages/tsconfig/package.json ./packages/tsconfig/
+COPY packages/ui/package.json ./packages/ui/
 
-COPY --from=builder /app/lingui.config.ts ./lingui.config.ts
+# Copy package-lock.json after all package.json files are in place
+COPY package-lock.json ./
 
-RUN npm ci
+# Install dependencies
+RUN npm install
 
-# Then copy all the source code (as it changes more often)
-COPY --from=builder /app/out/full/ .
-# Finally copy the turbo.json file so that we can run turbo commands
-COPY turbo.json turbo.json
+# Copy source code
+COPY . .
 
-RUN npm install -g "turbo@^1.9.3"
+# Generate Prisma client
+RUN npm run prisma:generate
 
-RUN turbo run build --filter=@documenso/remix...
+# Compile translations
+RUN npm run translate:compile
 
-###########################
-#     RUNNER CONTAINER    #
-###########################
-FROM base AS runner
-
-ENV HUSKY 0
-ENV DOCKER_OUTPUT 1
-ENV NODE_ENV=staging
-
-# Don't run production as root
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nodejs
-
-USER nodejs
-
-WORKDIR /app
-
-COPY --from=builder --chown=nodejs:nodejs /app/out/json/ .
-# Copy the tailwind config files across
-COPY --from=builder --chown=nodejs:nodejs /app/out/full/packages/tailwind-config ./packages/tailwind-config
-
-RUN npm ci --only=production
-
-# Automatically leverage output traces to reduce image size
-# https://nodejs.org/docs/advanced-features/output-file-tracing
-COPY --from=installer --chown=nodejs:nodejs /app/apps/remix/build ./apps/remix/build
-COPY --from=installer --chown=nodejs:nodejs /app/apps/remix/public ./apps/remix/public
-
-# Copy the prisma binary, schema and migrations
-COPY --from=installer --chown=nodejs:nodejs /app/packages/prisma/schema.prisma ./packages/prisma/schema.prisma
-COPY --from=installer --chown=nodejs:nodejs /app/packages/prisma/migrations ./packages/prisma/migrations
-
-# Generate the prisma client again
-RUN npx prisma generate --schema ./packages/prisma/schema.prisma
-
-# Get the start script from docker/staging/start.sh
-COPY --chown=nodejs:nodejs ./docker/staging/start.sh /app/apps/remix/start.sh
-RUN chmod +x /app/apps/remix/start.sh
-
-WORKDIR /app/apps/remix
-
+# Expose port
 EXPOSE 3000
 
-CMD ["sh", "start.sh"] 
+# Default command for development
+CMD ["npm", "run", "dev"] 

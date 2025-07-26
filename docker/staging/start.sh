@@ -1,35 +1,30 @@
-#!/bin/sh
-
-# =============================================================================
-# Documenso Staging Application Startup Script
-# =============================================================================
-# 
-# This script starts the Documenso application in the staging environment.
-# It performs the following tasks:
-# - Runs database migrations using Prisma
-# - Generates Prisma client for database access
-# - Starts the Remix application on port 3000
-# - Handles errors gracefully with set -e
-#
-# This script is executed inside the Docker container as the entry point.
-# It ensures the database is properly migrated before starting the app.
-#
-# Usage: Called automatically by Docker container
-# Requirements: Database connection, Prisma schema
-# =============================================================================
+#!/bin/bash
 
 set -e
 
-echo "Starting Documenso staging environment..."
+echo "🚀 Starting Documenso staging environment..."
 
-# Run database migrations
-echo "Running database migrations..."
-npx prisma migrate deploy --schema ../../packages/prisma/schema.prisma
+# Wait for database to be ready
+echo "⏳ Waiting for database to be ready..."
+until npm run prisma:migrate-deploy > /dev/null 2>&1; do
+    echo "Database not ready, waiting..."
+    sleep 5
+done
 
-# Generate Prisma client
-echo "Generating Prisma client..."
-npx prisma generate --schema ../../packages/prisma/schema.prisma
+echo "✅ Database migrations completed"
 
-# Start the application
-echo "Starting application on port 3000..."
-HOSTNAME=0.0.0.0 node build/server/main.js 
+# Generate Prisma client (with retry logic)
+echo "🔧 Generating Prisma client..."
+for i in {1..5}; do
+    if npm run prisma:generate -w @documenso/prisma; then
+        echo "✅ Prisma client generated successfully"
+        break
+    else
+        echo "⚠️  Prisma generation failed, retrying... (attempt $i/5)"
+        sleep 2
+    fi
+done
+
+# Start the production server
+echo "🚀 Starting production server..."
+cd apps/remix && npm run start 
