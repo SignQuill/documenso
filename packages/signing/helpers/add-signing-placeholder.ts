@@ -10,6 +10,7 @@ import {
 } from 'pdf-lib';
 
 import { BYTE_RANGE_PLACEHOLDER } from '../constants/byte-range';
+import { SIGNING_CERTIFICATE_TEXT } from '@documenso/lib/constants/app';
 
 export type AddSigningPlaceholderOptions = {
   pdf: Buffer;
@@ -33,7 +34,7 @@ export const addSigningPlaceholder = async ({ pdf }: AddSigningPlaceholderOption
       SubFilter: 'adbe.pkcs7.detached',
       ByteRange: byteRange,
       Contents: PDFHexString.fromText(' '.repeat(8192)),
-      Reason: PDFString.of('Signed by Documenso'),
+      Reason: PDFString.of(SIGNING_CERTIFICATE_TEXT()),
       M: PDFString.fromDate(new Date()),
     }),
   );

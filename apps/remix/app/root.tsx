@@ -30,9 +30,10 @@ import { GenericErrorLayout } from './components/general/generic-error-layout';
 import { langCookie } from './storage/lang-cookie.server';
 import { themeSessionResolver } from './storage/theme-session.server';
 import { appMetaTags } from './utils/meta';
+import { ANALYTICS_DOMAIN } from '@documenso/lib/constants/app';
 
 const { trackPageview } = Plausible({
-  domain: 'documenso.com',
+  domain: ANALYTICS_DOMAIN(),
   trackLocalhost: false,
 });
 

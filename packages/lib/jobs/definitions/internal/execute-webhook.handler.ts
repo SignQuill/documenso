@@ -4,6 +4,7 @@ import { prisma } from '@documenso/prisma';
 
 import type { JobRunIO } from '../../client/_internal/job';
 import type { TExecuteWebhookJobDefinition } from './execute-webhook';
+import { WEBHOOK_SECRET_HEADER } from '../../../constants/app';
 
 export const run = async ({
   payload,
@@ -35,7 +36,7 @@ export const run = async ({
       body: JSON.stringify(payloadData),
       headers: {
         'Content-Type': 'application/json',
-        'X-Documenso-Secret': secret ?? '',
+        [WEBHOOK_SECRET_HEADER()]: secret ?? '',
       },
     });
 
