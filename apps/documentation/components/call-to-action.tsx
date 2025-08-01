@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { APP_NAME } from '@documenso/lib/constants/app';
 import { Button } from '@documenso/ui/primitives/button';
 import { Card, CardContent } from '@documenso/ui/primitives/card';
 
@@ -15,7 +16,7 @@ export const CallToAction = ({ className, utmSource = 'generic-cta' }: CallToAct
         <h2 className="text-center text-2xl font-bold">Looking for the managed solution?</h2>
 
         <p className="text-muted-foreground mt-4 max-w-[55ch] text-center leading-normal">
-          You can get started with Documenso in minutes. We handle the infrastructure, so you can
+          You can get started with {APP_NAME()} in minutes. We handle the infrastructure, so you can
           focus on signing documents.
         </p>
 

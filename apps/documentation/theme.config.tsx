@@ -1,13 +1,15 @@
 import type { DocsThemeConfig } from 'nextra-theme-docs';
 import { useConfig } from 'nextra-theme-docs';
 
+import { APP_NAME } from '@documenso/lib/constants/app';
+
 const themeConfig: DocsThemeConfig = {
-  logo: <span>Documenso</span>,
+  logo: <span>{APP_NAME()}</span>,
   head: function useHead() {
     const config = useConfig<{ title?: string; description?: string }>();
 
-    const title = `${config.frontMatter.title} | Documenso Docs` || 'Documenso Docs';
-    const description = config.frontMatter.description || 'The official Documenso documentation';
+    const title = `${config.frontMatter.title} | ${APP_NAME()} Docs` || `${APP_NAME()} Docs`;
+    const description = config.frontMatter.description || `The official ${APP_NAME()} documentation`;
 
     return (
       <>
@@ -50,7 +52,7 @@ const themeConfig: DocsThemeConfig = {
       <span>
         {new Date().getFullYear()} ©{' '}
         <a href="https://documen.so" target="_blank">
-          Documenso
+          {APP_NAME()}
         </a>
         .
       </span>
@@ -60,7 +62,7 @@ const themeConfig: DocsThemeConfig = {
   primarySaturation: 48.47,
   useNextSeoProps() {
     return {
-      titleTemplate: '%s | Documenso Docs',
+      titleTemplate: `%s | ${APP_NAME()} Docs`,
     };
   },
 };

@@ -14,3 +14,7 @@ export const IS_BILLING_ENABLED = () => env('NEXT_PUBLIC_FEATURE_BILLING_ENABLED
 export const API_V2_BETA_URL = '/api/v2-beta';
 
 export const SUPPORT_EMAIL = 'support@documenso.com';
+
+// Branding constants
+export const APP_NAME = () => env('NEXT_PUBLIC_APP_NAME') ?? 'Documenso';
+export const APP_SHORT_NAME = () => env('NEXT_PUBLIC_APP_SHORT_NAME') ?? 'Documenso';

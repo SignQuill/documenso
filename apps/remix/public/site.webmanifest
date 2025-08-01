@@ -1,6 +1,6 @@
 {
-  "name": "Documenso",
-  "short_name": "Documenso",
+  "name": "{{APP_NAME}}",
+  "short_name": "{{APP_SHORT_NAME}}",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",

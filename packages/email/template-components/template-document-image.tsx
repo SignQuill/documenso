@@ -1,3 +1,4 @@
+import { APP_NAME } from '@documenso/lib/constants/app';
 import { Column, Img, Row, Section } from '../components';
 
 export interface TemplateDocumentImageProps {
@@ -16,7 +17,7 @@ export const TemplateDocumentImage = ({ assetBaseUrl, className }: TemplateDocum
         <Column />
 
         <Column>
-          <Img className="h-42 mx-auto" src={getAssetUrl('/static/document.png')} alt="Documenso" />
+          <Img className="h-42 mx-auto" src={getAssetUrl('/static/document.png')} alt={APP_NAME()} />
         </Column>
 
         <Column />
