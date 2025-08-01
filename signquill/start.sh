@@ -6,7 +6,10 @@ echo "🚀 Starting SignQuill production-like environment..."
 
 # Process branding files with current environment variables
 echo "📝 Processing branding files..."
-npm run branding:process
+cd /app && npm run branding:process
+
+# Return to the remix directory for the rest of the operations
+cd /app/apps/remix
 
 # Run database migrations
 echo "🗄️ Running database migrations..."

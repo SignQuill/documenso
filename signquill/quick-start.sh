@@ -29,6 +29,15 @@ if [ ! -f ".env" ]; then
     echo "✅ .env file created. You can customize it as needed."
 fi
 
+# Check if certificate exists, if not generate it
+if [ ! -f "certificates/signquill.p12" ]; then
+    echo "🔐 Generating development certificate..."
+    ./generate-cert.sh
+    echo "✅ Certificate generated successfully."
+else
+    echo "✅ Certificate already exists."
+fi
+
 echo "📋 Starting SignQuill production-like environment..."
 echo ""
 

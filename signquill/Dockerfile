@@ -68,6 +68,9 @@ COPY --from=builder /app/out/full/ .
 # Finally copy the turbo.json file so that we can run turbo commands
 COPY turbo.json turbo.json
 
+# Copy the branding script that turbo prune might have missed
+COPY --from=builder /app/scripts ./scripts
+
 RUN npm install -g "turbo@^1.9.3"
 
 # Process branding files before building
@@ -105,6 +108,9 @@ COPY --from=installer --chown=nodejs:nodejs /app/apps/remix/public ./apps/remix/
 # Copy the prisma binary, schema and migrations
 COPY --from=installer --chown=nodejs:nodejs /app/packages/prisma/schema.prisma ./packages/prisma/schema.prisma
 COPY --from=installer --chown=nodejs:nodejs /app/packages/prisma/migrations ./packages/prisma/migrations
+
+# Copy the branding script for runtime use
+COPY --from=installer --chown=nodejs:nodejs /app/scripts ./scripts
 
 # Generate the prisma client again
 RUN npx prisma generate --schema ./packages/prisma/schema.prisma

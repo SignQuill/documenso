@@ -70,7 +70,7 @@ services:
       - signquill-network
     restart: unless-stopped
 
-  signquill:
+  app:
     build:
       context: ..
       dockerfile: signquill/Dockerfile
@@ -123,7 +123,7 @@ services:
       - NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY}
       - NEXT_PUBLIC_DISABLE_SIGNUP=${NEXT_PUBLIC_DISABLE_SIGNUP}
       - NEXT_PRIVATE_SIGNING_LOCAL_FILE_PATH=${NEXT_PRIVATE_SIGNING_LOCAL_FILE_PATH:-/opt/documenso/cert.p12}
-      - NEXT_PRIVATE_SIGNING_PASSPHRASE=${NEXT_PRIVATE_SIGNING_PASSPHRASE}
+      - NEXT_PRIVATE_SIGNING_PASSPHRASE=${NEXT_PRIVATE_SIGNING_PASSPHRASE:-signquill}
       # SignQuill Branding Configuration
       - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME:?err}
       - NEXT_PUBLIC_APP_SHORT_NAME=${NEXT_PUBLIC_APP_SHORT_NAME:?err}
@@ -139,7 +139,7 @@ services:
     ports:
       - "${PORT:-3000}:${PORT:-3000}"
     volumes:
-      - /opt/documenso/cert.p12:/opt/documenso/cert.p12
+      - ./certificates/signquill.p12:/opt/documenso/cert.p12:ro
     networks:
       - signquill-network
     restart: unless-stopped

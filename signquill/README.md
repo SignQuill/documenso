@@ -7,6 +7,7 @@ This folder contains a production-like Docker configuration for running Documens
 ### Prerequisites
 - Docker and Docker Compose installed
 - Node.js 22+ (for local development)
+- OpenSSL (for certificate generation)
 
 ### Running SignQuill
 
@@ -21,6 +22,8 @@ This folder contains a production-like Docker configuration for running Documens
    cd signquill
    # Copy environment template
    cp env.production .env
+   # Generate certificate
+   ./generate-cert.sh
    # Customize .env if needed
    docker compose up
    ```
@@ -42,6 +45,7 @@ This folder contains a production-like Docker configuration for running Documens
 - Uses environment variables from `.env` file
 - Includes PostgreSQL, MinIO, Redis, and email testing
 - All branding environment variables configured
+- Mounts development certificate for PDF signing
 
 ### `Dockerfile`
 - Multi-stage production build process
@@ -64,8 +68,48 @@ This folder contains a production-like Docker configuration for running Documens
 ### `quick-start.sh`
 - Automated setup script
 - Creates `.env` from template
+- Generates development certificate
 - Starts all services
 - Provides helpful output
+
+### `generate-cert.sh`
+- Generates self-signed development certificate
+- Creates PKCS#12 format for application use
+- Sets proper file permissions
+- Includes certificate details and warnings
+
+## 🔐 Certificate Configuration
+
+The SignQuill setup includes PDF signing functionality with a development certificate:
+
+### **Certificate Details**
+- **Type**: Self-signed development certificate
+- **Organization**: SignQuill
+- **Common Name**: signquill.local
+- **Validity**: 365 days
+- **Password**: signquill
+- **Format**: PKCS#12 (.p12)
+
+### **Certificate Files**
+```
+certificates/
+├── signquill.key    # Private key
+├── signquill.crt    # Certificate
+├── signquill.csr    # Certificate signing request
+└── signquill.p12    # PKCS#12 bundle (used by app)
+```
+
+### **Environment Variables**
+```bash
+NEXT_PRIVATE_SIGNING_LOCAL_FILE_PATH=/opt/documenso/cert.p12
+NEXT_PRIVATE_SIGNING_PASSPHRASE=signquill
+```
+
+### **Security Notes**
+- ⚠️ **Development Only**: This is a self-signed certificate for development
+- ⚠️ **Not for Production**: Do not use in production environments
+- ⚠️ **Auto-Generated**: Certificate is generated automatically by the quick start script
+- ✅ **Git Ignored**: Certificate files are excluded from version control
 
 ## 🎨 Branding Configuration
 
@@ -142,6 +186,7 @@ The `.env` file includes all production variables:
 - **Security**: Encryption keys and secrets
 - **Features**: Feature flags and limits
 - **Branding**: All SignQuill branding variables
+- **Signing**: Certificate path and passphrase
 
 ## 🗄️ Services
 
@@ -171,6 +216,7 @@ The `.env` file includes all production variables:
 - **Build**: Multi-stage production build
 - **User**: nodejs (non-root)
 - **Startup**: Production-like with migrations
+- **Certificate**: Mounted for PDF signing
 
 ## 🛠️ Development
 
@@ -204,6 +250,19 @@ npm run prisma:seed
 npm run prisma:studio
 ```
 
+### Certificate Management
+```bash
+# Generate new certificate
+./generate-cert.sh
+
+# View certificate details
+openssl pkcs12 -info -in certificates/signquill.p12 -noout
+
+# Regenerate certificate (if needed)
+rm -rf certificates/
+./generate-cert.sh
+```
+
 ## 🔍 Troubleshooting
 
 ### Common Issues
@@ -227,6 +286,11 @@ npm run prisma:studio
 5. **Environment variables missing:**
    - Copy template: `cp env.production .env`
    - Check required variables in docker-compose.yml
+
+6. **Certificate issues:**
+   - Regenerate certificate: `./generate-cert.sh`
+   - Check certificate exists: `ls -la certificates/`
+   - Verify certificate format: `file certificates/signquill.p12`
 
 ### Logs
 ```bash
@@ -263,6 +327,7 @@ When making changes to the SignQuill setup:
 3. **Ensure branding** is properly applied
 4. **Test all services** work correctly
 5. **Update documentation** if needed
+6. **Regenerate certificate** if certificate-related changes
 
 ## 📄 License
 
